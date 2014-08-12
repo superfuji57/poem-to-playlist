@@ -3,36 +3,41 @@
 
 """
 Created on Fri Aug  8 15:53:31 2014
-Decribe Here!!!!!!!!
+
+Have the user enter in text and return a list of Spotify links to tracks whose titles best match
+the entered text. As seen here: http://spotifypoetry.tumblr.com/ 
+
+This is the first version of the solution I made. I made an arbitrary sequence of numbers, which is 
+the order that get_tracks attempts find a match. E.g., in sequence (4, 3, 5, 6, 2, 1), the function 
+will look for a match for the first 4 words of the text, then if no match is found attempt the first 3
+words, and so forth. This favors middle to longer track titles over single-word matches.
+It's quicker and dirtier than the second, but seemed to do the job reasonably well. 
 @author: awon
 """
 import json
 import re
 import time, urllib
-import pdb #debugger put pdb.set_trace() where i want to stop
+# import pdb #debugger put pdb.set_trace() where i want to stop
 
-# comment above
-endpoint = "http://ws.spotify.com/search/1/track.json"  # two spaces if here
+endpoint = "http://ws.spotify.com/search/1/track.json?q=" # spotify metadata api 
 
-# this is a song titled "Asterisk" to represent a * when a match is not found
-asterisk = "http://open.spotify.com/track/0me7sTN3zvz9MyZNN2hSr8"
-
-#class for json objects returned from api calls
-class spotify_track(dict):
+class SpotifyTrack(dict):
+    """ Class object to store results from api calls to dicts """
     def __init__(self, dict):
-        self.artist = dict["artists"][0]["name"].encode("utf-8")
+        self.artist = dict["artists"][0]["name"].encode("utf-8") 
         self.title = dict["name"].encode("utf-8")
         self.album = dict["album"]["name"].encode("utf-8")
         self.link = "http://open.spotify.com/track/" + dict['href'].encode('utf-8')[14:]
     def __repr__(self):
-        return self.title + " by " + self.artist #human friendly way to see objects
+        return self.title + " by " + self.artist # human friendly way to see objects
 
-#in memory cache storage fetcher via https://developer.yahoo.com/python/python-caching.html
 class CacheFetcher:
+    """ in memory cache that I found on the yahoo developer site:
+        https://developer.yahoo.com/python/python-caching.html """
     def __init__(self):
         self.cache = {}
     def fetch(self, url, max_age=0):
-    	""" Enter description here """	
+    	""" Takes requests and stores in an memory cache for signaled time """	
         if self.cache.has_key(url):
             if int(time.time()) - self.cache[url][0] < max_age:
                 return self.cache[url][1]
@@ -41,51 +46,51 @@ class CacheFetcher:
         self.cache[url] = (time.time(), data)
         return data
         
-fetcher = CacheFetcher()
+fetcher = CacheFetcher() # variable to call cache functions
 
-#looks for an exact phrase-track title match within api search results. 
-#Returns Spotify link if found; no match returns logical false    
 def track_match(phrase):
-    track_results = sp_search(phrase)
-    if len(track_results) == 0: return False
+    """ Find a track with a title that is an exact match for a phrase """
+    phrase = re.sub("[!?#$*./,-:@&%]", "", phrase) # remove special characters to match titles
+    phrase = phrase.lower().encode("utf-8") # make lower case and translate unicode
+    track_results = sp_search(phrase) 
+    if len(track_results) == 0: return False # false if no results
     for i in range(0, len(track_results)):
-        track_results[i].title = re.sub("[!?#$*./,]", "", track_results[i].title)
-        phrase = re.sub("[!?#$*./,]", "", phrase)
-        if track_results[i].title.lower() == phrase.lower():
-            return track_results[i].link
+        track_results[i].title = re.sub("[!?#$*./,-:@&%]", "", track_results[i].title)
+        if track_results[i].title.lower() == phrase:
+            return track_results[i] # return a track of first exact match found
             break
         elif i + 1 == len(track_results):
             return False
 
-#search Spotify metadata API for tracks given a query string    
-# rationale here
 def sp_search(query):
-	"""Return list of tracks from Spotify API from query string"""
-    track_list = []
-    #response = requests.get(endpoint, params = {"q": query})
-    response = fetcher.fetch(endpoint + "?q=" + query, 90)
-    #results = json.loads(response.text)['tracks']
+    """ search Spotify metadata API for tracks given a query string """
+    track_list = [] # empty list to store tracks
+    response = fetcher.fetch(endpoint + query, 300) # use cache
     results = json.loads(response)['tracks']
-    for i in range(0,len(results)): track_list.append(spotify_track(results[i])) # Does this make sense? if no explain
+    for i in range(0,len(results)): 
+        track_list.append(SpotifyTrack(results[i])) # store tracks in list
     return track_list
 
-#given a list of words, attempt to find a match and return a playlist
 def get_tracks(words):
-    songs = [] #empty list to store track links
-    seq = [4, 3, 5, 6, 2, 1] # arbitrary order of word combinations to try
+    """ Given a list of words or phrases attempt to find an exact match and
+        and return a playlist as list """
+    songs = [] # list to store tracks
+    # This is an arbitrary sequence of word combinations to avoid single word track names
+    seq = [4, 3, 5, 6, 2, 1]
     while len(words) > 0:
         for i in seq:
             phrase = " ".join(words[:i])
+            # add matches to songs list
             if track_match(phrase) != False: 
-                songs.append(track_match(phrase)) #add track to playlist
+                songs.append(track_match(phrase))
                 for word in words[:i]:
-                    words.remove(word) #remove words in title from word list
+                    words.remove(word) # remove words in title from word list
                 break
             elif i == 1:
                 if len(songs) == 0:
-                    songs.append(asterisk)
+                    songs.append(asterisk) # add "Asterisk" if no match for the first word
                     words.remove(words[0])
-                elif songs[-1] == asterisk:
+                elif songs[-1] == asterisk: # if last song added was "Asterisk" don't add again
                     words.remove(words[0])
                     break
                 else:
@@ -95,31 +100,36 @@ def get_tracks(words):
                 pass
     return songs
 
-# take multiple lines as input, enter or keyboard interrupt to finish
-# from http://stackoverflow.com/a/10426831/2727740
-def multi_input():
-    x = ["Type in the first line of your poem and press Enter: "]
-    for i in (range(1, 24)): x.append("Type another line or just press Enter. ") 
-    x.append("Limit reached. Please press enter.")
-    i = iter(x)
+def multi_input(max_lines=10):
+    """ Take multiple lines as input, enter or keyboard interrupt to finish
+        from http://stackoverflow.com/a/10426831/2727740. Edited to take iterable
+        string to change instructions. """
+    prompts = ["Type in the first line of your poem and press Enter: "]
+    for i in (range(0, max_lines)): prompts.append("Type another line or just press Enter: ") 
+    prompts.append("Limit reached. Please press enter.")
+    i = iter(prompts)
     try:
         while True:
             data=raw_input(i.next())
             if not data: break
             yield data
     except KeyboardInterrupt:
-        return
-  
+        return  
 
 def poem_to_playlist():
-    poem = list(multi_input())
-    playlist = []
+    """ Callable function to start prompt for poem input. Returns list of 
+        Spotify links to play tracks. """
+    playlist = [] # list to store tracks
+    print "Generating playlist..."
     for i in poem:
         playlist.append(get_tracks(i.split()))
     print "Here is your playlist:"
     for i in playlist:
         for x in i:
-            print x
+            print x.link
+
+asterisk = track_match("asterisk") # track to represent * for non matches
 
 if __name__ == "__main__":
+    poem = list(multi_input())
     poem_to_playlist()

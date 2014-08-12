@@ -1,7 +1,16 @@
+#!/usr/binpython
 # -*- coding: utf-8 -*-
 """
 Created on Fri Aug  8 15:53:31 2014
-Take in text, find matching song titles and return a playlist with spotify links
+Have the user enter in text and return a list of Spotify links to tracks whose titles best match
+the entered text. As seen here: http://spotifypoetry.tumblr.com/ 
+
+This is the second version of the solution I made. I found a function on stackoverflow (link commented
+in function below) that spits out all combinations of a string of text. As a result, a longer sentence
+will generate a number of requests to the Spotify API orders of magnitude greater than the first version.
+The program will first look for playlists with songs that match all words entered. If none exist, 
+a similarity score calculating how well a string of all words entered and all playlist song titles match
+is used.
 @author: awon
 """
 import json
@@ -9,7 +18,7 @@ import re
 import itertools
 import time, urllib
 import difflib
-import pdb # debugger: use pdb.set_trace() to stop
+# import pdb # debugger: use pdb.set_trace() to stop
  
 endpoint = "http://ws.spotify.com/search/1/track.json?q=" # spotify metadata api 
  
@@ -29,6 +38,7 @@ class CacheFetcher:
     def __init__(self):
         self.cache = {}
     def fetch(self, url, max_age=0):
+        """ Takes requests and stores in an memory cache for signaled time """  
         if self.cache.has_key(url):
             if int(time.time()) - self.cache[url][0] < max_age:
                 return self.cache[url][1]
@@ -53,12 +63,12 @@ def break_down(text):
               
 def track_match(phrase):
     " Find a track with a title that is an exact match for a phrase "
-    phrase = re.sub("[!?#$*./,-]", "", phrase) # remove special characters to match titles
+    phrase = re.sub("[!?#$*./,-:@&%]", "", phrase) # remove special characters to match titles
     phrase = phrase.lower().encode("utf-8") # make lower case and translate unicode
     track_results = sp_search(phrase) 
     if len(track_results) == 0: return False # false if no results
     for i in range(0, len(track_results)):
-        track_results[i].title = re.sub("[!?#$*./,-]", "", track_results[i].title)
+        track_results[i].title = re.sub("[!?#$*./,-:@&%]", "", track_results[i].title)
         if track_results[i].title.lower() == phrase:
             return track_results[i] # return a track of first exact match found
             break
@@ -90,7 +100,7 @@ def multi_input():
         from http://stackoverflow.com/a/10426831/2727740. Edited to take iterable
         string to change instructions. """
     prompts = ["Type in the first line of your poem and press Enter: "]
-    for i in (range(1, 24)): prompts.append("Type another line or just press Enter. ") 
+    for i in (range(1, 24)): prompts.append("Type another line or just press Enter: ") 
     prompts.append("Limit reached. Please press enter.")
     i = iter(prompts)
     try:
@@ -100,29 +110,6 @@ def multi_input():
             yield data
     except KeyboardInterrupt:
         return
- 
-def poem_to_playlist(poem):
-    """ Callable function to start prompt for poem input. Returns list of 
-        Spotify links to play tracks """
-    playlist = [] # empty list to store tracks
-    # this is a song titled "Asterisk" to represent an * when a match is not found
-    print "Generating playlist..."
-    for i in poem:
-        word_chunks = [] # var to store combinations for a line
-        if " " not in i: # check to see if line is a single word
-            playlist.append(get_tracks(poem))
-        else:
-            word_chunks.append(break_down(i))
-            temp_list = [] # list to store
-            for line in word_chunks:
-                for phrases in line:
-                    temp_list.append(get_tracks(phrases))
-                playlist.append(best_playlist(temp_list))
-    print "Here is your playlist: "
-    #return playlist #TAKE OUT WHEN FINSIHED SO IT WILL PRINT
-    for lists in playlist: 
-        for song in lists:
-            print song.link
 
 def all_words(lines):
     """ Return concatenated string of all words in a list of phrases from the
@@ -159,6 +146,28 @@ def best_playlist(playlists):
         filtered_playlists = sorted(playlists, 
                                     key = lambda x: similarity_to_poem(x, poem), reverse = True)
     return filtered_playlists[0] #return first in list, which should be top rated match
+ 
+def poem_to_playlist(poem):
+    """ Callable function to start prompt for poem input. Returns list of 
+        Spotify links to play tracks """
+    playlist = [] # list to store tracks
+    # this is a song titled "Asterisk" to represent an * when a match is not found
+    print "Generating playlist..."
+    for i in poem:
+        word_chunks = [] # var to store combinations for a line
+        if " " not in i: # check to see if line is a single word
+            playlist.append(get_tracks(poem))
+        else:
+            word_chunks.append(break_down(i))
+            temp_list = [] # list to store
+            for line in word_chunks:
+                for phrases in line:
+                    temp_list.append(get_tracks(phrases))
+                playlist.append(best_playlist(temp_list))
+    print "Here is your playlist: "
+    for lists in playlist: 
+        for song in lists:
+            print song.link
 
 asterisk = track_match("asterisk") # track to represent * for non matches
 
