@@ -8,6 +8,7 @@ import json
 import re
 import itertools
 import time, urllib
+import difflib
 import pdb # debugger: use pdb.set_trace() to stop
  
 endpoint = "http://ws.spotify.com/search/1/track.json?q=" # spotify metadata api 
@@ -119,10 +120,28 @@ def poem_to_playlist(poem):
                     temp_list.append(get_tracks(phrases))
                 playlist.append(best_playlist(temp_list))
     print "Here is your playlist: "
-    return playlist
+    #return playlist #TAKE OUT WHEN FINSIHED SO IT WILL PRINT
     for lists in playlist: 
         for song in lists:
             print song.link
+
+def all_words(lines):
+    words = str()
+    for line in lines:
+        for word in line.split():
+            words += " " + word.lower()
+    return words
+
+def similarity_to_poem(playlist, poem):
+    playlist_words = str()    
+    for lists in playlist:
+        for songs in lists:
+            for words in songs.title.split():
+                playlist_words += " " + words.lower()
+    poem_words = all_words(poem)
+    seq = difflib.SequenceMatcher(None, poem_words, playlist_words)
+    similarity_score = seq.ratio()*100
+    return similarity_score
 
 def best_playlist(playlists):
     """ Take a list of playlists and reorder them so that those without the "Asterisk" song
@@ -136,7 +155,7 @@ def best_playlist(playlists):
         filtered_playlists = sorted(filtered_playlists, key = len)
     else:
         filtered_playlists = sorted(playlists, 
-                                    key = lambda x: (x.count(asterisk), len(x)))
+                                    key = lambda x: (similarity_to_poem(x, poem)), reverse = True)
     return filtered_playlists[0] #return first in list, which should be top rated match
 
 
