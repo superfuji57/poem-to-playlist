@@ -74,7 +74,7 @@ def sp_search(query):
     return track_list
  
 def get_tracks(words):
-    """ Given a word, phrase or phrases attempt to find an exact match and
+    """ Given a list of words or phrases attempt to find an exact match and
         and return a playlist as list """
     songs = [] # empty list to store track links
     for chunk in words:
@@ -99,7 +99,7 @@ def multi_input():
             yield data
     except KeyboardInterrupt:
         return
-  
+
 asterisk = track_match("asterisk") # track to represent * for non matches
  
 def poem_to_playlist():
@@ -124,7 +124,6 @@ def poem_to_playlist():
     for lists in playlist: 
         for song in lists:
             print song.link
-
 
 def best_playlist(playlists):
     """ Take a list of playlists and reorder them so that those without the "Asterisk" song
