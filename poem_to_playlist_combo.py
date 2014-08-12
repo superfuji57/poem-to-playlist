@@ -125,33 +125,37 @@ def poem_to_playlist(poem):
             print song.link
 
 def all_words(lines):
+    """ Return concatenated string of all words in a list of phrases from the
+        poem break_down. Used in similarity_to_poem to calculate score """
     words = str()
     for line in lines:
         for word in line.split():
-            words += " " + word.lower()
+            words += " " + word.lower() # combine all words from the poem in a long string
     return words
 
 def similarity_to_poem(playlist, poem):
+    """ Uses difflib.SequenceMatcher to compare string of all words in poem to string
+        of all words in song titles from a playlist """ 
     playlist_words = str()    
     for songs in playlist:
         for words in songs.title.split():
-            playlist_words += " " + words.lower()
+            playlist_words += " " + words.lower() # Combine all words from titles in a string
     poem_words = all_words(poem)
-    seq = difflib.SequenceMatcher(None, poem_words, playlist_words)
+    seq = difflib.SequenceMatcher(None, poem_words, playlist_words) # get match score
     similarity_score = seq.ratio()*100
     return similarity_score
  
 def best_playlist(playlists):
-    """ Take a list of playlists and reorder them so that those without the "Asterisk" song
-        or with the fewest occurences is on top, then the lists with the fewest songs on 
-        top. This is to prioritize better matches. Main issue to address highly rated playlists
-        with low "Asterisk" occurences but matches with short song titles. """
+    """ Take a list of playlists and filter out any playlists with "Asterisks" with playlists
+        with the fewest songs on top to favor longer track titles. If all playlists combination
+        the "Asterisk" song, sort using similarity score of title and poem strings.  """
     filtered_playlists = [] # list to store reordered list of playlists
     for i in playlists:
-        if asterisk not in i: filtered_playlists.append(i)
+        if asterisk not in i: filtered_playlists.append(i) # get perfect playlists
     if len(filtered_playlists) != 0:
-        filtered_playlists = sorted(filtered_playlists, key = len)
+        filtered_playlists = sorted(filtered_playlists, key = len) # Sort by number of songs
     else:
+        # For poems that don't have perfect matches, use similarity score of titles to sort
         filtered_playlists = sorted(playlists, 
                                     key = lambda x: similarity_to_poem(x, poem), reverse = True)
     return filtered_playlists[0] #return first in list, which should be top rated match
