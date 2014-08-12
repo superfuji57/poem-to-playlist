@@ -100,12 +100,10 @@ def multi_input():
     except KeyboardInterrupt:
         return
 
-asterisk = track_match("asterisk") # track to represent * for non matches
  
 def poem_to_playlist():
     """ Callable function to start prompt for poem input. Returns list of 
         Spotify links to play tracks """
-    poem = list(multi_input()) # store input into variable
     playlist = [] # empty list to store tracks
     # this is a song titled "Asterisk" to represent an * when a match is not found
     print "Generating playlist..."
@@ -142,4 +140,6 @@ def best_playlist(playlists):
 
 
 if __name__ == "__main__":
+    asterisk = track_match("asterisk") # track to represent * for non matches
+    poem = list(multi_input()) # store input into variable
     poem_to_playlist()
