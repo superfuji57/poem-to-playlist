@@ -16,14 +16,15 @@ is used.
 import json
 import re
 import itertools
-import time, urllib
+import time, urllib # for the cache
 import difflib
 # import pdb # debugger: use pdb.set_trace() to stop
  
 endpoint = "http://ws.spotify.com/search/1/track.json?q=" # spotify metadata api 
  
 class SpotifyTrack(dict):
-    """ Class object to store results from api calls to dicts """
+    """ Class object to store results from api calls to dicts of a track's artist, title,
+        album and spotify play link """
     def __init__(self, dict):
         self.artist = dict["artists"][0]["name"].encode("utf-8") 
         self.title = dict["name"].encode("utf-8")
@@ -95,12 +96,12 @@ def get_tracks(words):
             songs.append(asterisk) # add "Asterisk" song in place of no match
     return songs
 
-def multi_input():
+def multi_input(max_lines=10):
     """ Take multiple lines as input, enter or keyboard interrupt to finish
         from http://stackoverflow.com/a/10426831/2727740. Edited to take iterable
         string to change instructions. """
     prompts = ["Type in the first line of your poem and press Enter: "]
-    for i in (range(1, 24)): prompts.append("Type another line or just press Enter: ") 
+    for i in (range(0, max_lines)): prompts.append("Type another line or just press Enter: ") 
     prompts.append("Limit reached. Please press enter.")
     i = iter(prompts)
     try:

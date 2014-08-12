@@ -10,22 +10,23 @@ the entered text. As seen here: http://spotifypoetry.tumblr.com/
 This is the first version of the solution I made. I made an arbitrary sequence of numbers, which is 
 the order that get_tracks attempts find a match. E.g., in sequence (4, 3, 5, 6, 2, 1), the function 
 will look for a match for the first 4 words of the text, then if no match is found attempt the first 3
-words, and so forth. This favors middle to longer track titles over single-word matches.
+words, and so forth. This favors middle-to-longer track titles over single-word matches.
 It's quicker and dirtier than the second, but seemed to do the job reasonably well. 
 @author: awon
 """
 import json
 import re
-import time, urllib
-# import pdb #debugger put pdb.set_trace() where i want to stop
+import time, urllib # for the cache
+# import pdb # debugger i used. put pdb.set_trace() where i want to stop
 
 endpoint = "http://ws.spotify.com/search/1/track.json?q=" # spotify metadata api 
 
 class SpotifyTrack(dict):
-    """ Class object to store results from api calls to dicts """
+    """ Class object to store results from api calls to dicts of a track's artist, title,
+        album and spotify play link """
     def __init__(self, dict):
         self.artist = dict["artists"][0]["name"].encode("utf-8") 
-        self.title = dict["name"].encode("utf-8")
+        self.title = dict["name"].encode("utf-8") 
         self.album = dict["album"]["name"].encode("utf-8")
         self.link = "http://open.spotify.com/track/" + dict['href'].encode('utf-8')[14:]
     def __repr__(self):
