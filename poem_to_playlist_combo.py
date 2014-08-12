@@ -157,7 +157,7 @@ def poem_to_playlist(poem):
     for i in poem:
         word_chunks = [] # var to store combinations for a line
         if " " not in i: # check to see if line is a single word
-            playlist.append(get_tracks(poem))
+            playlist.append(get_tracks([i]))
         else:
             word_chunks.append(break_down(i))
             temp_list = [] # list to store
