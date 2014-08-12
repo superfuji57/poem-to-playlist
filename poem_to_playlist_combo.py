@@ -88,19 +88,7 @@ def get_tracks(words):
         else:
             songs.append(asterisk) # add "Asterisk" song in place of no match
     return songs
- 
-# take multiple lines as input, enter or keyboard interrupt to finish
-# from http://stackoverflow.com/a/10426831/2727740
-"""def multi_input():
-    try:
-        while True:
-            data=raw_input("Type in a line of your poem and press <Enter>." +
-            "\n" + "Press <Enter> again on a blank line when finished: ")
-            if not data: break
-            yield data
-    except KeyboardInterrupt:
-        return
- """
+
 def multi_input():
     """ Take multiple lines as input, enter or keyboard interrupt to finish
         from http://stackoverflow.com/a/10426831/2727740. Edited to take iterable
