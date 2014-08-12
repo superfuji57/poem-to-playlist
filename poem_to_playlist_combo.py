@@ -100,7 +100,6 @@ def multi_input():
             yield data
     except KeyboardInterrupt:
         return
-
  
 def poem_to_playlist(poem):
     """ Callable function to start prompt for poem input. Returns list of 
@@ -134,15 +133,14 @@ def all_words(lines):
 
 def similarity_to_poem(playlist, poem):
     playlist_words = str()    
-    for lists in playlist:
-        for songs in lists:
-            for words in songs.title.split():
-                playlist_words += " " + words.lower()
+    for songs in playlist:
+        for words in songs.title.split():
+            playlist_words += " " + words.lower()
     poem_words = all_words(poem)
     seq = difflib.SequenceMatcher(None, poem_words, playlist_words)
     similarity_score = seq.ratio()*100
     return similarity_score
-
+ 
 def best_playlist(playlists):
     """ Take a list of playlists and reorder them so that those without the "Asterisk" song
         or with the fewest occurences is on top, then the lists with the fewest songs on 
@@ -155,11 +153,11 @@ def best_playlist(playlists):
         filtered_playlists = sorted(filtered_playlists, key = len)
     else:
         filtered_playlists = sorted(playlists, 
-                                    key = lambda x: (similarity_to_poem(x, poem)), reverse = True)
+                                    key = lambda x: similarity_to_poem(x, poem), reverse = True)
     return filtered_playlists[0] #return first in list, which should be top rated match
 
+asterisk = track_match("asterisk") # track to represent * for non matches
 
 if __name__ == "__main__":
-    asterisk = track_match("asterisk") # track to represent * for non matches
     poem = list(multi_input()) # store input into variable
     poem_to_playlist(poem)
