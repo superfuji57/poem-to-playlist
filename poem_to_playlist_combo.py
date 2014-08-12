@@ -101,7 +101,7 @@ def multi_input():
         return
 
  
-def poem_to_playlist():
+def poem_to_playlist(poem):
     """ Callable function to start prompt for poem input. Returns list of 
         Spotify links to play tracks """
     playlist = [] # empty list to store tracks
@@ -119,6 +119,7 @@ def poem_to_playlist():
                     temp_list.append(get_tracks(phrases))
                 playlist.append(best_playlist(temp_list))
     print "Here is your playlist: "
+    return playlist
     for lists in playlist: 
         for song in lists:
             print song.link
@@ -142,4 +143,4 @@ def best_playlist(playlists):
 if __name__ == "__main__":
     asterisk = track_match("asterisk") # track to represent * for non matches
     poem = list(multi_input()) # store input into variable
-    poem_to_playlist()
+    poem_to_playlist(poem)
