@@ -11,9 +11,6 @@ import time, urllib
 import pdb # debugger: use pdb.set_trace() to stop
  
 endpoint = "http://ws.spotify.com/search/1/track.json?q=" # spotify metadata api 
-
-#this is a song titled "Asterisk" to represent an * when a match is not found
-asterisk = "http://open.spotify.com/track/0me7sTN3zvz9MyZNN2hSr8"
  
 class SpotifyTrack(dict):
     """ Class object to store results from api calls to dicts """
@@ -25,7 +22,6 @@ class SpotifyTrack(dict):
     def __repr__(self):
         return self.title + " by " + self.artist # human friendly way to see objects
  
-#in memory cache storage fetcher via https://developer.yahoo.com/python/python-caching.html
 class CacheFetcher:
     """ in memory cache that I found on the yahoo developer site:
         https://developer.yahoo.com/python/python-caching.html """
@@ -77,7 +73,6 @@ def sp_search(query):
         track_list.append(SpotifyTrack(results[i])) # store tracks in list
     return track_list
  
-#given a list of words, attempt to find a match and return a playlist
 def get_tracks(words):
     """ Given a word, phrase or phrases attempt to find an exact match and
         and return a playlist as list """
@@ -105,11 +100,15 @@ def multi_input():
     except KeyboardInterrupt:
         return
   
+asterisk = track_match("asterisk") # track to represent * for non matches
+ 
 def poem_to_playlist():
     """ Callable function to start prompt for poem input. Returns list of 
         Spotify links to play tracks """
     poem = list(multi_input()) # store input into variable
     playlist = [] # empty list to store tracks
+    # this is a song titled "Asterisk" to represent an * when a match is not found
+    print "Generating playlist..."
     for i in poem:
         word_chunks = [] # var to store combinations for a line
         if " " not in i: # check to see if line is a single word
@@ -123,8 +122,9 @@ def poem_to_playlist():
                 playlist.append(best_playlist(temp_list))
     print "Here is your playlist: "
     for lists in playlist: 
-        for line in lists:
-            print line
+        for song in lists:
+            print song.link
+
 
 def best_playlist(playlists):
     """ Take a list of playlists and reorder them so that those without the "Asterisk" song
